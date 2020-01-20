@@ -13,7 +13,7 @@ public class DaarWebAppApplication {
 	 @RequestMapping("/")
 	    @ResponseBody
 	    String home() {
-	      return "Hello World!";
+	      return "Hello World!  bla";
 	    }
 	
 	public static void main(String[] args) {

@@ -3,16 +3,18 @@ package com.hxsarl.daar_web_app.java;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 public class Indexing {
 
@@ -41,19 +43,10 @@ public class Indexing {
 		}
 	}
 	//CODE
-	private static Map<String, Map<String,Integer>> database = new HashMap<String, Map<String,Integer>>();
-	private static Map<String, File> allFiles = new HashMap<>();
-	private static Map<Integer, String> fileNumber = new HashMap<>();
-	static int cpt = 0;
-	final static DecimalFormat df = new DecimalFormat("#0.000");
-	
-	//should be a parameter of exec
 	final static String commonestWordFilename = "src/main/java/com/hxsarl/daar_web_app/java/200_commonest_word.txt";
+	final static String jsonFilename = "src/index.json";
 	static Set<String> commonestWords = new HashSet<>();
-	
-	public static Map<String, Integer> buildIndexing(Path p) throws IOException {
-		return Indexing.indexing(p.toString());
-	}
+	public static Map<String, ArrayList<Pair>> index = new HashMap<String, ArrayList<Pair>>();
 
 	public static void parseCommonestWords(String filename) throws IOException {
 		InputStream flux=new FileInputStream(filename); 
@@ -69,14 +62,37 @@ public class Indexing {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static boolean buildDataBase(File dir) throws IOException {
 		File[] directoryListing = dir.listFiles();
-		Map<String, ArrayList<Pair>> index = indexingFiles(directoryListing);
+		JSONObject json_root = new JSONObject();
+		JSONObject json_index = new JSONObject();
+		index = indexingFiles(directoryListing);
+		long start = System.currentTimeMillis();
 		index.forEach((k,v) -> {
-			v.forEach((p) -> {
-				System.out.println("Word : "+k+", File : "+p.getKey()+", Occurence : "+p.getValue());
-			});
+			JSONObject word_detail = new JSONObject();
+			JSONArray array_files = new JSONArray();
+			for(Pair p : v) {
+				JSONObject file = new JSONObject();
+				file.put(p.getKey(), p.getValue());
+				array_files.add(file);
+			}
+			word_detail.put("files", array_files);
+			json_index.put(k, word_detail);
 		});
+		System.out.println(index.size());
+		json_root.put("index", json_index);
+		try(FileWriter file = new FileWriter(jsonFilename)) {
+			System.out.println(json_root.toJSONString());
+			file.write(json_root.toJSONString());
+			file.flush();
+			file.close();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}		
+		long end = System.currentTimeMillis();
+		double duration = (end - start)/1000000.0;
+		System.out.println("End : "+duration+" ms");
 		return true;
 	}
 
@@ -87,54 +103,8 @@ public class Indexing {
 		String name = reader.readLine(); 
 		File dir = new File(name);
 		if (!buildDataBase(dir)) throw new IOException("Not a repository");
-
 	}
 	
-	public static Map<String, Integer> indexing (String fileName) throws IOException {
-		InputStream flux=new FileInputStream(fileName); 
-		InputStreamReader lecture=new InputStreamReader(flux);
-		BufferedReader buff=new BufferedReader(lecture);
-		try {
-			Map<String, Integer> index = new HashMap<>();
-			String ligne;
-			int c=0;
-			int i = 1, j = 1;
-			while ((ligne=buff.readLine())!=null){
-				if(ligne.length() == 0) continue;
-				j=1;
-				String[] words = ligne.split("\\s*[^a-zA-Z'-]+\\s*");
-				int cpt = 0;
-				for (cpt=0;cpt<words.length;cpt++) {
-					String word = words[cpt];
-					word = word.toLowerCase();
-					if(index.containsKey(word)) {
-						index.put(word, index.get(word)+1);
-					}
-					else {
-						index.put(word, 1);
-					}
-					int space_count = 0;
-					j += word.length();
-					if(cpt < words.length-1) 
-						while(ligne.charAt(j-1) != words[cpt+1].charAt(0)) {
-							j++;
-						}
-				}
-				i++;
-			}
-			
-			for(String s:Main.commonestWords) {
-				index.remove(s);
-			}
-			
-			return index;
-		}finally {
-			buff.close();
-		}
-
-	}
-
-	@SuppressWarnings("unchecked")
 	public static Map<String, ArrayList<Pair>> indexingFiles (File[] fileNames) throws IOException {
 		Map<String, ArrayList<Pair>> index = new HashMap<>();
 		
@@ -142,6 +112,7 @@ public class Indexing {
 			System.out.println("Computing for "+fileNames[i]);
 			Map<String, Integer> index_temp = new HashMap<>();
 			String fileName = fileNames[i].getAbsolutePath();
+			String fileNameSmall = fileNames[i].getName();
 			InputStream flux=new FileInputStream(fileName); 
 			InputStreamReader lecture=new InputStreamReader(flux);
 			BufferedReader br=new BufferedReader(lecture);
@@ -162,12 +133,12 @@ public class Indexing {
 			index_temp.forEach((k,v) -> {
 				if(index.containsKey(k)) {
 					ArrayList<Pair> l = index.get(k);
-					l.add(new Pair(fileName,v));
+					l.add(new Pair(fileNameSmall,v));
 					index.replace(k, l);
 				}
 				else {
 					ArrayList<Pair> list  = new ArrayList<>();
-					list.add(new Pair(fileName,v));
+					list.add(new Pair(fileNameSmall,v));
 					index.put(k, list);
 				}
 			});
@@ -175,7 +146,7 @@ public class Indexing {
 			br.close();
 		}
 		
-		for(String s:Main.commonestWords) {
+		for(String s:commonestWords) {
 			index.remove(s);
 		}
 		return index;

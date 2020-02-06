@@ -1,4 +1,4 @@
-package com.hxsarl.daar_web_app.java;
+/*package com.hxsarl.daar_web_app.java;
 
 import java.awt.image.PackedColorModel;
 import java.io.BufferedReader;
@@ -232,7 +232,7 @@ public class Main{
 			System.out.println(i + " " + m.fileNumber.get(i) + " " +closene[i]);
 			
 			buffCL1.write( closene[i]+"\n");
-		}*/
+		}
 		System.out.println("---------------CLOSENESS2----------------");
 		for(int i = 0; i < g.size(); i++) {
 			//System.out.println(m.fileNumber.get(i) + " " +betweeness[i]);
@@ -245,5 +245,5 @@ public class Main{
 		buffBT.close();
 	}
 }
-
+*/
 

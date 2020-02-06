@@ -76,9 +76,6 @@ public class Main{
 		System.out.println("Enter the repository containing the data");
 		BufferedReader reader =  
 				new BufferedReader(new InputStreamReader(System.in)); 
-		Map.Entry<String,Integer> entry =
-				new AbstractMap.SimpleEntry<String, Integer>("exmpleString", 42);
-		// Reading data using readLine 
 		String name = reader.readLine(); 
 		File dir = new File(name);
 		if (!buildDataBase(dir)) throw new IOException("Not a repository");

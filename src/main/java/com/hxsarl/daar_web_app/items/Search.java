@@ -44,7 +44,7 @@ public class Search {
 	private HashMap<String,Long> files = new HashMap<String,Long>();
 
 	@SuppressWarnings("unchecked")
-	public Search(String word) {
+	public Search(String word, String method) {
 		this.word = word;
 		//JSON parser object to parse read file
 		JSONParser jsonParser = new JSONParser();
@@ -57,23 +57,50 @@ public class Search {
 
 			JSONObject index = (JSONObject) json.get("index");
 
-			JSONObject word_obj = (JSONObject)index.get(word);
-			JSONArray files_json = (JSONArray)word_obj.get("files");
-			//Iterate over files array
-			Iterator<Object> it = files_json.iterator();
-			while(it.hasNext()) {
-				JSONObject jsonObject = (JSONObject) it.next();
-				for(Object key : jsonObject.keySet()) {
-					Long value = (Long) jsonObject.get(key.toString());
-					files.put(key.toString(), value);					
+			if(method.equals("normal")) {
+				JSONObject word_obj = (JSONObject)index.get(word);
+				JSONArray files_json = (JSONArray)word_obj.get("files");
+				//Iterate over files array
+				Iterator<Object> it = files_json.iterator();
+				while(it.hasNext()) {
+					JSONObject jsonObject = (JSONObject) it.next();
+					for(Object key : jsonObject.keySet()) {
+						Long value = (Long) jsonObject.get(key.toString());
+						files.put(key.toString(), value);					
+					}
+					
 				}
-				
+				files_json.forEach( file -> 
+				{
+					JSONObject file_json = (JSONObject) file;
+					System.out.println(file_json.toJSONString());
+				});
 			}
-			files_json.forEach( file -> 
-			{
-				JSONObject file_json = (JSONObject) file;
-				System.out.println(file_json.toJSONString());
-			});
+			if(method.equals("regex")) {
+				Iterator<String> iterator = index.keySet().iterator();
+				while(iterator.hasNext()) {
+					String key = iterator.next();
+					if(key.matches(word)) {
+						JSONObject word_obj = (JSONObject)index.get(key);
+						JSONArray files_json = (JSONArray)word_obj.get("files");
+						//Iterate over files array
+						Iterator<Object> it = files_json.iterator();
+						while(it.hasNext()) {
+							JSONObject jsonObject = (JSONObject) it.next();
+							for(Object key2 : jsonObject.keySet()) {
+								Long value = (Long) jsonObject.get(key2.toString());
+								files.put(key.toString(), value);					
+							}
+						}
+						files_json.forEach( file -> 
+						{
+							JSONObject file_json = (JSONObject) file;
+							System.out.println(file_json.toJSONString());
+						});
+					}
+				}
+			}
+			
 
 		} catch (FileNotFoundException e) {
 			System.out.println("file not found !");

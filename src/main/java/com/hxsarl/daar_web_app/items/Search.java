@@ -41,8 +41,10 @@ public class Search {
 	private static String jsonFileName = "src/index.json";
 
 	private final String word;
+	
 	private HashMap<String,Long> files = new HashMap<String,Long>();
 
+	
 	@SuppressWarnings("unchecked")
 	public Search(String word, String method) {
 		this.word = word;
@@ -66,21 +68,16 @@ public class Search {
 					JSONObject jsonObject = (JSONObject) it.next();
 					for(Object key : jsonObject.keySet()) {
 						Long value = (Long) jsonObject.get(key.toString());
-						files.put(key.toString(), value);					
+						files.put(key.toString(), value);
 					}
 					
 				}
-				files_json.forEach( file -> 
-				{
-					JSONObject file_json = (JSONObject) file;
-					System.out.println(file_json.toJSONString());
-				});
 			}
 			if(method.equals("regex")) {
 				Iterator<String> iterator = index.keySet().iterator();
 				while(iterator.hasNext()) {
 					String key = iterator.next();
-					if(key.matches(word)) {
+					if(key.contains(word)) {
 						JSONObject word_obj = (JSONObject)index.get(key);
 						JSONArray files_json = (JSONArray)word_obj.get("files");
 						//Iterate over files array
@@ -89,14 +86,9 @@ public class Search {
 							JSONObject jsonObject = (JSONObject) it.next();
 							for(Object key2 : jsonObject.keySet()) {
 								Long value = (Long) jsonObject.get(key2.toString());
-								files.put(key.toString(), value);					
+								files.put(key2.toString(), value);
 							}
 						}
-						files_json.forEach( file -> 
-						{
-							JSONObject file_json = (JSONObject) file;
-							System.out.println(file_json.toJSONString());
-						});
 					}
 				}
 			}
@@ -111,11 +103,6 @@ public class Search {
 		}
 	}
 
-	public String getWord() {
-		return word;
-	}
-	
-	public HashMap<String,Long> getFiles(){
-		return files;
-	}
+	public String getWord() {return word;}
+	public HashMap<String,Long> getFiles(){return files;}
 }

@@ -18,6 +18,7 @@ public class SearchController {
 	}
 	
 	@GetMapping("/regex")
+	@CrossOrigin(origins = {"http://localhost:3000"})
 	public Search searchBookRegex(@RequestParam(value = "regex", defaultValue = "") String regex) {
 		return new Search(regex,"regex");
 	}

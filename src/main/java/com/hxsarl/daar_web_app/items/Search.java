@@ -1,5 +1,7 @@
 package com.hxsarl.daar_web_app.items;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -59,7 +61,7 @@ public class Search {
 
 			JSONObject index = (JSONObject) json.get("index");
 
-			if(method.equals("normal")) {
+			if(method.equals("mot-clef")) {
 				JSONObject word_obj = (JSONObject)index.get(word);
 				JSONArray files_json = (JSONArray)word_obj.get("files");
 				//Iterate over files array
@@ -73,7 +75,7 @@ public class Search {
 					
 				}
 			}
-			if(method.equals("regex")) {
+			if(method.equals("contains")) {
 				Iterator<String> iterator = index.keySet().iterator();
 				while(iterator.hasNext()) {
 					String key = iterator.next();
@@ -91,6 +93,17 @@ public class Search {
 						}
 					}
 				}
+			}
+			if(method.equals("title")) {
+				BufferedReader br = new BufferedReader(new FileReader(new File("src/titres.txt")));
+				String line;
+				while((line = br.readLine()) != null) {
+					String[] line_split = line.split("#");
+					if(line_split[0].contains(word)) {
+						files.put(line_split[0], (long)0);
+					}
+				}
+				br.close();
 			}
 			
 

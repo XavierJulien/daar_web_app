@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.apache.tomcat.jni.Directory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -40,7 +41,7 @@ public class Search {
 			}
 		}
 	
-	private static String jsonFileName = "src/index.json";
+	private static String indexDir = "src/index";
 
 	private final String word;
 	private HashMap<String,Long> files = new HashMap<String,Long>();
@@ -68,72 +69,73 @@ public class Search {
 			e1.printStackTrace();
 		}
 		
-		
-		try (FileReader reader = new FileReader(jsonFileName))
-		{
-			//Read JSON file
-			Object obj = jsonParser.parse(reader);
-			JSONObject json = (JSONObject) obj;
-
-			JSONObject index = (JSONObject) json.get("index");
-
-			if(method.equals("mot-clef")) {
-				JSONObject word_obj = (JSONObject)index.get(word);
-				JSONArray files_json = (JSONArray)word_obj.get("files");
-				//Iterate over files array
-				Iterator<Object> it = files_json.iterator();
-				while(it.hasNext()) {
-					JSONObject jsonObject = (JSONObject) it.next();
-					for(Object key : jsonObject.keySet()) {
-						Long value = (Long) jsonObject.get(key.toString());
-						String title = key.toString();
-						if(file_title.containsKey(key.toString())) {
-							title = file_title.get(key.toString());
-						}
-						files.put(key+"#"+title, value);
-					}
-					
-				}
-			}
-			if(method.equals("contains")) {
-				Iterator<String> iterator = index.keySet().iterator();
-				while(iterator.hasNext()) {
-					String key = iterator.next();
-					if(key.contains(word)) {
-						JSONObject word_obj = (JSONObject)index.get(key);
-						JSONArray files_json = (JSONArray)word_obj.get("files");
+		File[] directoryListing = new File(indexDir).listFiles();
+		long start = System.currentTimeMillis();
+		for(File f : directoryListing) {
+			System.out.println("Computing for "+f);
+			try (FileReader reader = new FileReader(f))
+			{
+				//Read JSON file
+				Object obj = jsonParser.parse(reader);
+				JSONObject index = (JSONObject) obj;
+				if(index.containsKey(word)){
+					if(method.equals("mot-clef")) {
+						JSONArray files_json = (JSONArray)index.get(word);
 						//Iterate over files array
 						Iterator<Object> it = files_json.iterator();
 						while(it.hasNext()) {
 							JSONObject jsonObject = (JSONObject) it.next();
-							for(Object key2 : jsonObject.keySet()) {
-								Long value = (Long) jsonObject.get(key2.toString());
-								String title = key2.toString();
-								if(file_title.containsKey(key2.toString())) {
-									title = file_title.get(key2.toString());
+							for(Object key : jsonObject.keySet()) {
+								Long value = (Long) jsonObject.get(key.toString());
+								String title = key.toString();
+								if(file_title.containsKey(key.toString())) {
+									title = file_title.get(key.toString());
 								}
-								files.put(key2+"#"+title, value);
+								files.put(key+"#"+title, value);
+							}
+							
+						}
+					}
+					if(method.equals("contains")) {
+						Iterator<String> iterator = index.keySet().iterator();
+						while(iterator.hasNext()) {
+							String key = iterator.next();
+							if(key.contains(word)) {
+								JSONArray files_json = (JSONArray)index.get(key);
+								//Iterate over files array
+								Iterator<Object> it = files_json.iterator();
+								while(it.hasNext()) {
+									JSONObject jsonObject = (JSONObject) it.next();
+									for(Object key2 : jsonObject.keySet()) {
+										Long value = (Long) jsonObject.get(key2.toString());
+										String title = key2.toString();
+										if(file_title.containsKey(key2.toString())) {
+											title = file_title.get(key2.toString());
+										}
+										files.put(key2+"#"+title, value);
+									}
+								}
 							}
 						}
 					}
-				}
-			}
-			if(method.equals("title")) {
-				title_file.forEach((title,file) -> {
-					if(title.toLowerCase().contains(word)) {
-						files.put(file+"#"+title, (long)0);
+					if(method.equals("title")) {
+						title_file.forEach((title,file) -> {
+							if(title.toLowerCase().contains(word)) {
+								files.put(file+"#"+title, (long)0);
+							}
+						});
 					}
-				});
+				}
+			} catch (FileNotFoundException e) {
+				System.out.println("file not found !");
+			} catch (IOException e) {
+				System.out.println("io Exception !");
+			} catch (ParseException e) {
+				System.out.println("parse execption !");
 			}
-			
-
-		} catch (FileNotFoundException e) {
-			System.out.println("file not found !");
-		} catch (IOException e) {
-			System.out.println("io Exception !");
-		} catch (ParseException e) {
-			System.out.println("parse execption !");
 		}
+		long end = System.currentTimeMillis();
+		System.out.println("Time : "+((end-start)/1000000.0)+" ms");
 	}
 
 	public String getWord() {return word;}

@@ -43,7 +43,6 @@ public class Search {
 	private static String jsonFileName = "src/index.json";
 
 	private final String word;
-	
 	private HashMap<String,Long> files = new HashMap<String,Long>();
 
 	private HashMap<String,String> file_title = new HashMap<String,String>();
@@ -91,7 +90,7 @@ public class Search {
 						if(file_title.containsKey(key.toString())) {
 							title = file_title.get(key.toString());
 						}
-						files.put(title, value);
+						files.put(key+"#"+title, value);
 					}
 					
 				}
@@ -113,7 +112,7 @@ public class Search {
 								if(file_title.containsKey(key2.toString())) {
 									title = file_title.get(key2.toString());
 								}
-								files.put(title, value);
+								files.put(key2+"#"+title, value);
 							}
 						}
 					}
@@ -122,7 +121,7 @@ public class Search {
 			if(method.equals("title")) {
 				title_file.forEach((title,file) -> {
 					if(title.toLowerCase().contains(word)) {
-						files.put(title, (long)0);
+						files.put(file+"#"+title, (long)0);
 					}
 				});
 			}

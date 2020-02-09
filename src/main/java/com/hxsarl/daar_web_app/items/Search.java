@@ -46,6 +46,8 @@ public class Search {
 	
 	private HashMap<String,Long> files = new HashMap<String,Long>();
 
+	private HashMap<String,String> file_title = new HashMap<String,String>();
+	private HashMap<String,String> title_file = new HashMap<String,String>();
 	
 	@SuppressWarnings("unchecked")
 	public Search(String word, String method) {
@@ -53,6 +55,21 @@ public class Search {
 		//JSON parser object to parse read file
 		JSONParser jsonParser = new JSONParser();
 
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File("src/titres.txt")));
+			String line;
+			while((line = br.readLine()) != null) {
+				String[] line_split = line.split("#");
+				String[] filename_split = line.split("books/");
+				file_title.put(filename_split[1], line_split[0]);
+				title_file.put(line_split[0], filename_split[1]);
+			}
+			br.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		
 		try (FileReader reader = new FileReader(jsonFileName))
 		{
 			//Read JSON file
@@ -70,7 +87,11 @@ public class Search {
 					JSONObject jsonObject = (JSONObject) it.next();
 					for(Object key : jsonObject.keySet()) {
 						Long value = (Long) jsonObject.get(key.toString());
-						files.put(key.toString(), value);
+						String title = key.toString();
+						if(file_title.containsKey(key.toString())) {
+							title = file_title.get(key.toString());
+						}
+						files.put(title, value);
 					}
 					
 				}
@@ -88,22 +109,22 @@ public class Search {
 							JSONObject jsonObject = (JSONObject) it.next();
 							for(Object key2 : jsonObject.keySet()) {
 								Long value = (Long) jsonObject.get(key2.toString());
-								files.put(key2.toString(), value);
+								String title = key2.toString();
+								if(file_title.containsKey(key2.toString())) {
+									title = file_title.get(key2.toString());
+								}
+								files.put(title, value);
 							}
 						}
 					}
 				}
 			}
 			if(method.equals("title")) {
-				BufferedReader br = new BufferedReader(new FileReader(new File("src/titres.txt")));
-				String line;
-				while((line = br.readLine()) != null) {
-					String[] line_split = line.split("#");
-					if(line_split[0].contains(word)) {
-						files.put(line_split[0], (long)0);
+				title_file.forEach((title,file) -> {
+					if(title.toLowerCase().contains(word)) {
+						files.put(title, (long)0);
 					}
-				}
-				br.close();
+				});
 			}
 			
 

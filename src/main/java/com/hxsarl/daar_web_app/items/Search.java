@@ -68,72 +68,73 @@ public class Search {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		
-		File[] directoryListing = new File(indexDir).listFiles();
 		long start = System.currentTimeMillis();
-		for(File f : directoryListing) {
-			System.out.println("Computing for "+f);
-			try (FileReader reader = new FileReader(f))
-			{
-				//Read JSON file
-				Object obj = jsonParser.parse(reader);
-				JSONObject index = (JSONObject) obj;
-				if(index.containsKey(word)){
-					if(method.equals("mot-clef")) {
-						JSONArray files_json = (JSONArray)index.get(word);
-						//Iterate over files array
-						Iterator<Object> it = files_json.iterator();
-						while(it.hasNext()) {
-							JSONObject jsonObject = (JSONObject) it.next();
-							for(Object key : jsonObject.keySet()) {
-								Long value = (Long) jsonObject.get(key.toString());
-								String title = key.toString();
-								if(file_title.containsKey(key.toString())) {
-									title = file_title.get(key.toString());
+		if(method.equals("title")) {
+			title_file.forEach((title,file) -> {
+				if(title.toLowerCase().contains(word)) {
+					files.put(file+"#"+title, (long)0);
+				}
+			});
+		}else {
+			File[] directoryListing = new File(indexDir).listFiles();
+			for(File f : directoryListing) {
+				System.out.println("Computing for "+f);
+				try (FileReader reader = new FileReader(f))
+				{
+					//Read JSON file
+					Object obj = jsonParser.parse(reader);
+					JSONObject index = (JSONObject) obj;
+					if(index.containsKey(word)){
+						if(method.equals("mot-clef")) {
+							JSONArray files_json = (JSONArray)index.get(word);
+							//Iterate over files array
+							Iterator<Object> it = files_json.iterator();
+							while(it.hasNext()) {
+								JSONObject jsonObject = (JSONObject) it.next();
+								for(Object key : jsonObject.keySet()) {
+									Long value = (Long) jsonObject.get(key.toString());
+									String title = key.toString();
+									if(file_title.containsKey(key.toString())) {
+										title = file_title.get(key.toString());
+									}
+									files.put(key+"#"+title, value);
 								}
-								files.put(key+"#"+title, value);
+								
 							}
-							
 						}
-					}
-					if(method.equals("contains")) {
-						Iterator<String> iterator = index.keySet().iterator();
-						while(iterator.hasNext()) {
-							String key = iterator.next();
-							if(key.contains(word)) {
-								JSONArray files_json = (JSONArray)index.get(key);
-								//Iterate over files array
-								Iterator<Object> it = files_json.iterator();
-								while(it.hasNext()) {
-									JSONObject jsonObject = (JSONObject) it.next();
-									for(Object key2 : jsonObject.keySet()) {
-										Long value = (Long) jsonObject.get(key2.toString());
-										String title = key2.toString();
-										if(file_title.containsKey(key2.toString())) {
-											title = file_title.get(key2.toString());
+						if(method.equals("contains")) {
+							Iterator<String> iterator = index.keySet().iterator();
+							while(iterator.hasNext()) {
+								String key = iterator.next();
+								if(key.contains(word)) {
+									JSONArray files_json = (JSONArray)index.get(key);
+									//Iterate over files array
+									Iterator<Object> it = files_json.iterator();
+									while(it.hasNext()) {
+										JSONObject jsonObject = (JSONObject) it.next();
+										for(Object key2 : jsonObject.keySet()) {
+											Long value = (Long) jsonObject.get(key2.toString());
+											String title = key2.toString();
+											if(file_title.containsKey(key2.toString())) {
+												title = file_title.get(key2.toString());
+											}
+											files.put(key2+"#"+title, value);
 										}
-										files.put(key2+"#"+title, value);
 									}
 								}
 							}
 						}
 					}
-					if(method.equals("title")) {
-						title_file.forEach((title,file) -> {
-							if(title.toLowerCase().contains(word)) {
-								files.put(file+"#"+title, (long)0);
-							}
-						});
-					}
+				} catch (FileNotFoundException e) {
+					System.out.println("file not found !");
+				} catch (IOException e) {
+					System.out.println("io Exception !");
+				} catch (ParseException e) {
+					System.out.println("parse execption !");
 				}
-			} catch (FileNotFoundException e) {
-				System.out.println("file not found !");
-			} catch (IOException e) {
-				System.out.println("io Exception !");
-			} catch (ParseException e) {
-				System.out.println("parse execption !");
 			}
 		}
+		
 		long end = System.currentTimeMillis();
 		System.out.println("Time : "+((end-start)/1000000.0)+" ms");
 	}
